@@ -18,7 +18,7 @@
  */
 
 
-#define USER_SEL_VERSION VERSION_22
+#define USER_SEL_VERSION VERSION_18
 /**
  * Provide an easy-to-use way to manipulate ESP8266. 
  */
@@ -68,7 +68,7 @@ class ESP8266 {
      * @retval false - dead.
      */
     bool kick(void);
-    
+	bool eATCIPSTATUS();
     /**
      * Restart ESP8266 by "AT+RST". 
      *
@@ -537,7 +537,7 @@ class ESP8266 {
      * @retval true - success.
      * @retval false - failure.
      */
-    bool send(char *buffer, uint32_t len);
+    bool send(const char *buffer, uint32_t len);
             
     /**
      * Send data based on one of TCP or UDP builded already in multiple mode. 
@@ -605,6 +605,7 @@ class ESP8266 {
      * @return the length of data received actually. 
      */
     uint32_t recv(uint8_t *coming_mux_id, uint8_t *buffer, uint32_t buffer_size, uint32_t timeout = 1000);
+	uint32_t recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout);
 
  private:
 
@@ -649,7 +650,7 @@ class ESP8266 {
      * @param coming_mux_id - in single connection mode, should be NULL and not NULL in multiple. 
      */
     uint32_t recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_len, uint32_t timeout, uint8_t *coming_mux_id);
-    
+	
     
     bool eAT(void);
     bool eATRST(void);
@@ -682,10 +683,10 @@ class ESP8266 {
     bool eCWSTOPSMART(void);
 
    
-    bool eATCIPSTATUS(String &list);
+    
     bool sATCIPSTARTSingle(String type, String addr, uint32_t port);
     bool sATCIPSTARTMultiple(uint8_t mux_id, String type, String addr, uint32_t port);
-    bool sATCIPSENDSingle(char *buffer, uint32_t len);
+    bool sATCIPSENDSingle(const char *buffer, uint32_t len);
     bool sATCIPSENDMultiple(uint8_t mux_id, const uint8_t *buffer, uint32_t len);
     bool sATCIPSENDSingleFromFlash(const uint8_t *buffer, uint32_t len);
     bool sATCIPSENDMultipleFromFlash(uint8_t mux_id, const uint8_t *buffer, uint32_t len);
@@ -698,6 +699,7 @@ class ESP8266 {
     bool eATSAVETRANSLINK(uint8_t mode,String ip,uint32_t port);
     bool eATPING(String ip);
     bool sATCIPSTO(uint32_t timeout);
+	bool eATCIPSTATUS(String &list);
     
     /*
      * +IPD,len:data

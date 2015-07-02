@@ -375,7 +375,7 @@ bool ESP8266::stopServer(void)
     return stopTCPServer();
 }
 
-bool ESP8266::send( char buffer[], uint32_t len)
+bool ESP8266::send( const char* buffer, uint32_t len)
 {
     return sATCIPSENDSingle(buffer, len);
 }
@@ -496,6 +496,28 @@ uint32_t ESP8266::recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_
     return 0;
 }
 
+
+uint32_t ESP8266::recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t timeout)
+{
+	char* data;
+	char a;
+	if (buffer == NULL) {
+		return 0;
+	}
+
+	unsigned int start = millis();
+	unsigned int i = 0;
+	while (millis() - start < timeout&& buffer_size != 0 && i<buffer_size){
+		if (m_puart->available() > 0) {
+			a = m_puart->read();
+			buffer[i++] = a;
+		}
+		buffer[i] = '\0';
+
+	}
+		return i-1;
+}
+
 void ESP8266::rx_empty(void) 
 {
     while(m_puart->available() > 0) {
@@ -517,8 +539,7 @@ String ESP8266::recvString(String target, uint32_t timeout)
         if (data.indexOf(target) != -1) {
             break;
         }   
-    }
-    
+    }    
     return data;
 }
 
@@ -608,7 +629,7 @@ bool ESP8266::eATRST(void)
 bool ESP8266::eATGMR(String &version)
 {
     rx_empty();
-    delay(3000);
+    delay(1000);
     m_puart->println(F("AT+GMR\r"));
     return recvFindAndFilter("OK", "\r\r\n", "\r\n\r\nOK", version,5000); 
 }
@@ -1142,15 +1163,19 @@ bool ESP8266::eCWSTOPSMART(void)
 	
     return recvFind("OK");
 }
-
 bool ESP8266::eATCIPSTATUS(String &list)
 {
-    String data;
-    delay(100);
+	rx_empty();
+	m_puart->println(F("AT+CIPSTATUS\r"));
+	list = recvString("OK", 100);
+	return list.indexOf("OK") > 0 ? 1 : 0;
+}
+bool ESP8266::eATCIPSTATUS()
+{
     rx_empty();
     m_puart->println(F("AT+CIPSTATUS\r"));
-	
-    return recvFindAndFilter("OK", "\r\r\n", "\r\n\r\nOK", list);
+	String list=recvString("OK", 100);
+	return list.indexOf("STATUS:3") >= 0 ? 1 : 0;
 }
 bool ESP8266::sATCIPSTARTSingle(String type, String addr, uint32_t port)
 {
@@ -1162,13 +1187,13 @@ bool ESP8266::sATCIPSTARTSingle(String type, String addr, uint32_t port)
     m_puart->print(addr);
     m_puart->print(F("\","));
     m_puart->print(port);
-	m_puart->println("\r");
+	m_puart->println("\r\n");
     
-    data = recvString("OK", "ERROR", "ALREADY CONNECT", 10000);
-    if (data.indexOf("OK") != -1 || data.indexOf("ALREADY CONNECT") != -1) {
+    data = recvString("OK", "ERROR", "ALREAY CONNECT", 5000);
+    if (data.indexOf("OK") != -1 || data.indexOf("ALREAY CONNECT") != -1) {
         return true;
     }
-    return false;
+	return false;
 }
 bool ESP8266::sATCIPSTARTMultiple(uint8_t mux_id, String type, String addr, uint32_t port)
 {
@@ -1189,15 +1214,13 @@ bool ESP8266::sATCIPSTARTMultiple(uint8_t mux_id, String type, String addr, uint
     }
     return false;
 }
-bool ESP8266::sATCIPSENDSingle( char *buffer, uint32_t len)
+bool ESP8266::sATCIPSENDSingle( const char *buffer, uint32_t len)
 {
-    rx_empty();
-    m_puart->print(F("AT+CIPSEND="));
+   m_puart->print(F("AT+CIPSEND="));
     m_puart->print(len);
-	m_puart->println("\r");
-    if (recvFind(">", 5000)) {
-        rx_empty();
-        for (uint32_t i = 0; i < len; i++) {
+	m_puart->print("\r\n");
+    if (recvFind(">", 500)) {
+            for (uint32_t i = 0; i < len; i++) {
             m_puart->write(buffer[i]);
         }
 		return recvFind("SEND OK", 1000);
@@ -1206,15 +1229,14 @@ bool ESP8266::sATCIPSENDSingle( char *buffer, uint32_t len)
 }
 bool ESP8266::sATCIPSENDMultiple(uint8_t mux_id, const uint8_t *buffer, uint32_t len)
 {
-    rx_empty();
+    
     m_puart->print(F("AT+CIPSEND="));
     m_puart->print(mux_id);
     m_puart->print(F(","));
     m_puart->print(len);
 	m_puart->println("\r");
     if (recvFind(">", 5000)) {
-        rx_empty();
-        for (uint32_t i = 0; i < len; i++) {
+          for (uint32_t i = 0; i < len; i++) {
             m_puart->write(buffer[i]);
         }
         return recvFind("SEND OK", 10000);
