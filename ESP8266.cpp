@@ -512,9 +512,8 @@ uint32_t ESP8266::recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t timeou
 			a = m_puart->read();
 			buffer[i++] = a;
 		}
-		buffer[i] = '\0';
-
 	}
+		buffer[i] = '\0';
 		return i-1;
 }
 
