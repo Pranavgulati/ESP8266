@@ -1188,7 +1188,7 @@ bool ESP8266::sATCIPSTARTSingle(String type, String addr, uint32_t port)
     m_puart->print(port);
 	m_puart->println("\r\n");
     
-    data = recvString("OK", "ERROR", "ALREAY CONNECT", 5000);
+    data = recvString("OK", "ERROR", "ALREAY CONNECT", 11000);
     if (data.indexOf("OK") != -1 || data.indexOf("ALREAY CONNECT") != -1) {
         return true;
     }
