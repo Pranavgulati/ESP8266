@@ -1,4 +1,6 @@
 @mainpage
+made the IteadLIB for ESP8266 work for my use.please use by seeing the changes for yourself if you desire those changes
+they are Primarily corrections based on the AT command firmware response behavior of the ESP8266
 
 # WeeESP8266
 
